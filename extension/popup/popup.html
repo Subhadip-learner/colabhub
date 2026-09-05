@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ColabHub</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="../icons/icon32.png" width="44" height="44" alt="" class="brand-logo" />
+      <div class="brand-text">
+        <div class="brand-name">Colab<b>Hub</b></div>
+        <div class="brand-sub" id="brand-sub">Open Google Colab first</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button id="btn-settings" class="icon-btn" title="Settings" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="view" class="view" aria-live="polite">
+    <div class="center muted">Loading…</div>
+  </main>
+
+  <footer class="footer">
+    <button id="btn-back" class="link hidden">‹ Back</button>
+    <span id="gh-status" class="foot-status">Ready</span>
+    <span></span>
+  </footer>
+
+  <!-- ============ templates ============ -->
+
+  <template id="tpl-overview">
+    <section class="stack">
+      <div class="card" data-slot="gh-card">
+        <div class="card-head"><span class="dot" data-slot="gh-dot"></span>GitHub connection</div>
+        <div class="card-sub" data-slot="gh-sub"></div>
+
+        <button class="btn btn-block btn-lg" data-action="oauth">
+          <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Connect GitHub
+        </button>
+
+        <div class="account hidden" data-slot="account">
+          <span class="avatar" data-slot="avatar"></span>
+          <span class="account-body"><b data-slot="login"></b><span class="muted small" data-slot="name"></span></span>
+          <button class="link small" data-action="disconnect-github">Disconnect</button>
+        </div>
+
+        <div class="device hidden" data-slot="device">
+          <div class="small">Enter this code on <a data-slot="verify-link" target="_blank" rel="noopener"></a> (opened in a new tab):</div>
+          <div class="device-code-row">
+            <code class="device-code" data-slot="code"></code>
+            <button class="btn btn-sm" data-action="copy" title="Copy code">Copy</button>
+          </div>
+          <div class="muted small" data-slot="device-status">Waiting for GitHub…</div>
+          <button class="link small" data-action="cancel-device">Cancel</button>
+        </div>
+
+        <details class="details" data-slot="pat-details">
+          <summary>Use a personal access token instead</summary>
+          <div class="stack-sm">
+            <p class="muted small">Create a token at <b>github.com → Settings → Developer settings</b> with the <code>repo</code> scope (classic) or <em>Contents: Read &amp; write</em> + <em>Administration: Read &amp; write</em> (fine-grained; Administration is needed to create repositories).</p>
+            <input type="password" data-field="pat" placeholder="ghp_… or github_pat_…" autocomplete="off" spellcheck="false" />
+            <button class="btn" data-action="pat">Connect with token</button>
+          </div>
+        </details>
+
+        <div class="card-sub small" data-slot="drive"></div>
+        <p class="error hidden" data-slot="error"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-label-row"><span>Current notebook</span><span class="pill" data-slot="nb-pill"></span></div>
+        <div class="card-title" data-slot="nb-title"></div>
+        <div class="path-box" data-slot="nb-path"></div>
+        <div class="muted small hidden" data-slot="nb-reason"></div>
+      </div>
+
+      <button class="action" data-action="create">
+        <span class="tile amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6z"/></svg></span>
+        <span class="action-body">
+          <span class="action-title">Create New Repository</span>
+          <span class="action-sub">Start a new Colab project</span>
+        </span>
+      </button>
+
+      <button class="action" data-action="existing">
+        <span class="tile blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></span>
+        <span class="action-body">
+          <span class="action-title">Connect Existing Repo</span>
+          <span class="action-sub">Use an existing GitHub repo</span>
+        </span>
+      </button>
+
+      <div class="card hidden" data-slot="recent">
+        <div class="card-label-row"><span>Connected notebooks</span></div>
+        <div data-slot="recent-list"></div>
+      </div>
+    </section>
+  </template>
+
+  <template id="tpl-setup">
+    <section class="stack">
+      <h1>Publisher setup</h1>
+      <p class="muted small">This build has no sign-in keys yet (you loaded the source unpacked). <b>End users never see this screen</b> — a published build ships with these values in <code>config.js</code> and opens straight on <b>Connect GitHub</b>. Do it once here, or run <code>npm run configure</code>.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-n">1</span><b>GitHub OAuth App</b> <span class="pill todo" data-slot="gh-state"></span></div>
+        <ol class="small">
+          <li><button class="link" data-action="open-gh">Open github.com → New OAuth App</button></li>
+          <li>Name: <code>ColabHub</code>, Homepage: anything</li>
+          <li>Callback URL: <span class="copyrow"><code data-slot="cb-github"></code><button class="btn btn-sm" data-action="copy" data-target="cb-github">Copy</button></span></li>
+          <li>Click <b>Register application</b>, then <b>Generate a new client secret</b> (keep the page open for step 2)</li>
+          <li>Paste the <b>Client ID</b> here:</li>
+        </ol>
+        <input data-field="githubClientId" placeholder="Client ID, e.g. Ov23li…" spellcheck="false" autocomplete="off" />
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-n">2</span><b>Token-exchange backend</b> <span class="pill todo" data-slot="be-state"></span></div>
+        <p class="small muted">GitHub only hands out a token in exchange for the app's <b>client secret</b>, which must never be inside the extension. A ~100-line Cloudflare Worker (<code>backend/worker.js</code>, free tier) holds it and does that single step. From the project folder:</p>
+        <code class="block small">cd backend
+npx wrangler login
+npx wrangler secret put GITHUB_CLIENT_ID
+npx wrangler secret put GITHUB_CLIENT_SECRET
+npx wrangler deploy</code>
+        <p class="small muted">Paste the URL it prints:</p>
+        <div class="row">
+          <input data-field="tokenExchangeUrl" placeholder="https://colabhub-auth.<you>.workers.dev" spellcheck="false" autocomplete="off" />
+          <button class="btn btn-sm" data-action="test-backend" title="Ping the Worker's /health endpoint">Test</button>
+        </div>
+        <p class="small muted hidden" data-slot="be-result"></p>
+        <details class="details">
+          <summary>Personal build without a backend (dev only)</summary>
+          <div class="stack-sm">
+            <p class="muted small">For a build that only <i>you</i> use, you can paste the client secret instead; the extension then talks to github.com directly. It is stored in this browser profile only. Never distribute a build made this way.</p>
+            <input data-field="githubClientSecret" type="password" placeholder="Client secret (40 hex characters)" spellcheck="false" autocomplete="off" />
+          </div>
+        </details>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-n">3</span><b>Google Drive</b> <span class="pill todo" data-slot="g-state"></span></div>
+        <p class="small muted">Needed to read the notebook file. <button class="link" data-action="open-gcp">Google Cloud → Credentials</button> → enable <i>Drive API</i> → OAuth client (<i>Web application</i>) with redirect URI
+          <span class="copyrow"><code data-slot="cb-google"></code><button class="btn btn-sm" data-action="copy" data-target="cb-google">Copy</button></span></p>
+        <input data-field="googleClientId" placeholder="1234567890-abc.apps.googleusercontent.com" spellcheck="false" autocomplete="off" />
+      </div>
+
+      <p class="error hidden" data-slot="error"></p>
+      <button class="btn btn-primary btn-lg" data-action="save">Save &amp; continue</button>
+      <button class="link small" data-action="use-pat">Skip — sign in with a personal access token instead</button>
+    </section>
+  </template>
+
+  <template id="tpl-create">
+    <form class="stack" data-form="create" novalidate>
+      <h1>Create GitHub Repository</h1>
+
+      <label class="field">
+        <span>Owner</span>
+        <select data-field="owner"></select>
+      </label>
+
+      <label class="field">
+        <span>Repository name</span>
+        <input data-field="name" required maxlength="100" spellcheck="false" autocomplete="off" placeholder="my-colab-project" />
+        <span class="field-hint" data-slot="name-hint"></span>
+      </label>
+
+      <label class="field">
+        <span>Description <span class="muted">(optional)</span></span>
+        <input data-field="description" maxlength="350" placeholder="My Google Colab projects" />
+      </label>
+
+      <fieldset class="field">
+        <legend>Visibility</legend>
+        <label class="radio">
+          <input type="radio" name="visibility" value="private" data-field="private" checked />
+          <span><b>🔒 Private</b><br /><span class="muted small">Only you and people you invite can see it. Recommended.</span></span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="visibility" value="public" data-field="public" />
+          <span><b>🌎 Public</b><br /><span class="muted small">Anyone on the internet can see this repository.</span></span>
+        </label>
+        <div class="warn hidden" data-slot="public-warning">
+          ⚠️ Public repositories can be viewed by anyone. Make sure your notebook doesn't contain API keys, credentials or private data.
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>Initialize repository</legend>
+        <label class="check"><input type="checkbox" data-field="readme" checked /> Add README.md</label>
+        <label class="check"><input type="checkbox" data-field="gitignore" checked /> Add .gitignore</label>
+        <select data-field="gitignoreTemplate" class="indent">
+          <option value="Python" selected>Python</option>
+        </select>
+      </fieldset>
+
+      <details class="details">
+        <summary>Notebook options</summary>
+        <div class="stack-sm">
+          <label class="field">
+            <span>Path in repository</span>
+            <input data-field="path" spellcheck="false" />
+          </label>
+          <label class="field">
+            <span>Push granularity</span>
+            <select data-field="granularity">
+              <option value="ipynb" selected>Whole notebook (.ipynb)</option>
+              <option value="py">Python script (.py) — code cells only</option>
+              <option value="outputs">Cell outputs + execution log (.outputs.json)</option>
+            </select>
+            <span class="field-hint" data-slot="granularity-hint"></span>
+          </label>
+          <label class="check"><input type="checkbox" data-field="autoSync" /> Auto Sync — commit when the notebook is saved</label>
+          <label class="check"><input type="checkbox" data-field="autoPushOnCell" /> Auto-Push — commit after each cell run</label>
+          <label class="check"><input type="checkbox" data-field="stripOutputs" /> Strip cell outputs before committing</label>
+        </div>
+      </details>
+
+      <p class="error hidden" data-slot="error"></p>
+      <button type="submit" class="btn btn-primary btn-lg" data-action="submit">Create Repository</button>
+    </form>
+  </template>
+
+  <template id="tpl-existing">
+    <form class="stack" data-form="existing" novalidate>
+      <h1>Connect Existing Repository</h1>
+
+      <label class="field">
+        <span>Search repositories</span>
+        <input data-field="filter" type="search" placeholder="Type to search — name, owner/name, description, owner:org" autocomplete="off" spellcheck="false" />
+        <span class="field-hint" data-slot="repo-hint"></span>
+      </label>
+      <div class="repo-list" data-field="repo" role="listbox" aria-label="Repositories"></div>
+
+      <label class="field">
+        <span>Branch</span>
+        <select data-field="branch"><option value="">Pick a repository first</option></select>
+      </label>
+
+      <label class="field">
+        <span>Path in repository</span>
+        <input data-field="path" spellcheck="false" />
+      </label>
+
+      <label class="field">
+        <span>Push granularity</span>
+        <select data-field="granularity">
+          <option value="ipynb" selected>Whole notebook (.ipynb)</option>
+          <option value="py">Python script (.py) — code cells only</option>
+          <option value="outputs">Cell outputs + execution log (.outputs.json)</option>
+        </select>
+        <span class="field-hint" data-slot="granularity-hint"></span>
+      </label>
+      <label class="check"><input type="checkbox" data-field="autoSync" /> Auto Sync — commit when the notebook is saved</label>
+      <label class="check"><input type="checkbox" data-field="autoPushOnCell" /> Auto-Push — commit after each cell run</label>
+      <label class="check"><input type="checkbox" data-field="stripOutputs" /> Strip cell outputs before committing</label>
+
+      <p class="error hidden" data-slot="error"></p>
+      <button type="submit" class="btn btn-primary btn-lg" data-action="submit">Connect &amp; Sync</button>
+    </form>
+  </template>
+
+  <template id="tpl-dashboard">
+    <section class="stack">
+      <div class="card">
+        <div class="card-label-row"><span>Current notebook</span><span class="pill ok">Linked</span></div>
+        <div class="card-title" data-slot="title"></div>
+        <a class="path-box" data-slot="path" target="_blank" rel="noopener" title="Open the file on GitHub"></a>
+        <div class="kv">
+          <span>Repository</span><a data-slot="repo" target="_blank" rel="noopener"></a>
+          <span>Branch</span><code data-slot="branch"></code>
+          <span>Visibility</span><span data-slot="visibility"></span>
+        </div>
+      </div>
+
+      <div class="status" data-slot="status">
+        <span class="status-dot"></span>
+        <div class="status-body">
+          <div class="status-title" data-slot="status-title"></div>
+          <div class="muted small" data-slot="status-sub"></div>
+        </div>
+      </div>
+
+      <div class="findings hidden" data-slot="findings"></div>
+      <div class="conflict hidden" data-slot="conflict"></div>
+
+      <div class="row">
+        <button class="btn btn-primary grow" data-action="sync">Sync Now</button>
+        <button class="btn" data-action="sync-msg" title="Sync with a custom commit message">✎</button>
+      </div>
+
+      <h2 class="section-title">Colab integration</h2>
+      <label class="switch">
+        <input type="checkbox" data-field="autoPushOnCell" />
+        <span>Auto-Push <span class="muted small">— push after each cell run</span></span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" data-field="autoSync" />
+        <span>Auto Sync <span class="muted small">— commit when the notebook is saved (Ctrl+S) or changes</span></span>
+      </label>
+      <label class="field">
+        <span>Push granularity</span>
+        <select data-field="granularity">
+          <option value="ipynb">Whole notebook (.ipynb)</option>
+          <option value="py">Python script (.py) — code cells only</option>
+          <option value="outputs">Cell outputs + execution log (.outputs.json)</option>
+        </select>
+        <span class="field-hint" data-slot="granularity-hint"></span>
+      </label>
+      <label class="switch" data-slot="strip-row">
+        <input type="checkbox" data-field="stripOutputs" />
+        <span>Strip outputs <span class="muted small">— commit code only, no cell outputs</span></span>
+      </label>
+
+      <p class="error hidden" data-slot="error"></p>
+
+      <details class="details">
+        <summary>Change repository or path</summary>
+        <div class="stack-sm">
+          <label class="field"><span>Path in repository</span><input data-field="path" spellcheck="false" /></label>
+          <button class="btn btn-sm" data-action="save-path">Save path</button>
+          <button class="btn btn-sm btn-danger" data-action="disconnect">Disconnect notebook</button>
+        </div>
+      </details>
+    </section>
+  </template>
+
+  <template id="tpl-settings">
+    <section class="stack">
+      <h1>Settings</h1>
+
+      <div class="nb-card" data-slot="account"></div>
+
+      <label class="field">
+        <span>Default folder for notebooks</span>
+        <input data-field="defaultFolder" spellcheck="false" placeholder="notebooks" />
+      </label>
+      <label class="field">
+        <span>Auto-sync check interval (minutes)</span>
+        <input data-field="autoSyncMinutes" type="number" min="1" max="120" />
+      </label>
+      <label class="check"><input type="checkbox" data-field="autoSyncDefault" /> Enable Auto Sync for new notebooks</label>
+      <label class="check"><input type="checkbox" data-field="autoPushOnCellDefault" /> Enable Auto-Push (after cell run) for new notebooks</label>
+      <label class="check"><input type="checkbox" data-field="stripOutputsDefault" /> Strip outputs by default</label>
+      <label class="field">
+        <span>Default push granularity</span>
+        <select data-field="granularityDefault">
+          <option value="ipynb">Whole notebook (.ipynb)</option>
+          <option value="py">Python script (.py)</option>
+          <option value="outputs">Cell outputs + log (.outputs.json)</option>
+        </select>
+      </label>
+
+      <button class="btn btn-primary" data-action="save">Save settings</button>
+
+      <details class="details">
+        <summary>Connected notebooks</summary>
+        <div data-slot="notebooks" class="stack-sm"></div>
+      </details>
+
+      <details class="details">
+        <summary>Developer setup</summary>
+        <div class="stack-sm small">
+          <p class="muted">Register these redirect URLs in your GitHub OAuth App and Google OAuth client:</p>
+          <code class="block" data-slot="redirect-github"></code>
+          <code class="block" data-slot="redirect-google"></code>
+          <p class="muted" data-slot="caps"></p>
+        </div>
+      </details>
+
+      <button class="btn btn-danger" data-action="disconnect-github">Disconnect GitHub</button>
+    </section>
+  </template>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

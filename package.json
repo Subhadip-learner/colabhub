@@ -1,0 +1,25 @@
+{
+  "name": "colabhub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that backs up Google Colab notebooks to GitHub — LeetHub for Colab.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/background.test.mjs tests/lib.test.mjs tests/worker.test.mjs",
+    "configure": "node scripts/configure.mjs",
+    "extension-id": "node scripts/extension-id.mjs",
+    "generate-key": "node scripts/generate-key.mjs",
+    "backend:dev": "node backend/dev-server.mjs",
+    "backend:deploy": "cd backend && npx wrangler deploy",
+    "package": "node scripts/package.mjs",
+    "demo": "node scripts/build-demo.mjs",
+    "test:e2e": "node tests/e2e/demo.e2e.mjs && node tests/e2e/demo.e2e.mjs --sandboxed && node tests/e2e/journey.e2e.mjs",
+    "demo:serve": "node scripts/serve-demo.mjs 8080"
+  },
+  "devDependencies": {
+    "terser": "^5.51.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

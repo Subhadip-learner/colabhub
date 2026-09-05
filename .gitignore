@@ -1,0 +1,11 @@
+node_modules/
+release/
+keys/*.pem
+keys/*.der
+.wrangler/
+.dev.vars
+*.log
+.DS_Store
+*.zip
+demo/screenshot-*.png
+colabhub-extension/

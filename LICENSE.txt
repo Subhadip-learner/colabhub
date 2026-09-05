@@ -1,0 +1,11 @@
+ColabHub - All Rights Reserved
+
+Copyright (c) 2026 ColabHub contributors.
+
+This repository and its source code are proprietary. You may run the software
+for personal use, but you may not copy, modify, redistribute, publish, sell,
+sublicense, or create derivative works from the source or packaged extension
+without prior written permission from the copyright holder.
+
+The GitHub and Google OAuth client IDs are public application identifiers.
+Never redistribute OAuth client secrets, access tokens, or Cloudflare secrets.

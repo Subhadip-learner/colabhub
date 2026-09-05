@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "ColabHub — Write • Sync • Track: Google Colab ↔ GitHub",
+  "short_name": "ColabHub",
+  "version": "0.2.0",
+  "description": "Sign in with GitHub, create or pick a repository, and ColabHub keeps your Google Colab notebook committed — on save or after every cell run, as .ipynb, .py or cell outputs.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAphm51Pc1R7iEKHhjJn9+uBGrkCEoxlPYDO9HbSr9hcmkYFUkfDGHBZMvBQefTBhEAXlN18YbyIhhCn9G6JCbEj/36bcgWcpygN10QtQyA9Hne1dLNbYD6m/p8dFuzKS170EYhvoivruo6tn6XieWZBw77Gw2kSQGtNDemcki69aJgAT7Zg2ztoY7X0Am3S6nqTRo/6rN1KY+TpG6Ctn31jDmDY3YVf+gSwouTAqfkdzvth6YNnVJWDtRsSIdZ8cixgiDZZ1sDml2OoapfT0BRadR9Kzo89lclpeyHWvYTjb1UeI3yFiu9pIpV75zQ6egmDE3uWoGDG4xjJRFc4xSFQIDAQAB",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "ColabHub",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "identity",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://colab.research.google.com/*",
+    "https://github.com/*",
+    "https://api.github.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://colab.research.google.com/*"
+      ],
+      "js": [
+        "content/colab.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/icon32.png"
+      ],
+      "matches": [
+        "https://colab.research.google.com/*"
+      ]
+    }
+  ]
+}

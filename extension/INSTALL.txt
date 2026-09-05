@@ -1,0 +1,82 @@
+ColabHub — install as an unpacked Chrome extension
+===================================================
+
+1. Unzip this folder somewhere permanent (Chrome loads it from disk every start).
+
+2. Open Chrome (or Edge / Brave) and go to:   chrome://extensions
+   - turn on "Developer mode" (top-right switch)
+   - click "Load unpacked"
+   - select THIS folder (the one containing manifest.json)
+
+   You should see "ColabHub — Write • Sync • Track: Google Colab ↔ GitHub", version 0.2.0,
+   ID: opghjahdadhgakfklikfgmibfpajbggj
+
+3. Pin it: puzzle-piece icon in the toolbar → pin "ColabHub".
+
+4. Open any Colab notebook whose URL looks like
+   https://colab.research.google.com/drive/....   and click the ColabHub icon.
+
+What the user sees
+------------------
+  One dark dashboard popup:
+    ● GitHub connection   "Backend OAuth proxy ready"  [Connect GitHub]
+                          → GitHub's normal "Authorize ColabHub" page → Authorize (standard OAuth, once)
+                          → card shows "@username · Disconnect"
+    Current notebook      <title>  notebooks/<Name>.ipynb   pill: Not linked / Not Colab / Linked
+    📁 Create New Repository   |  🔗 Connect Existing Repo   (enabled once GitHub + a Colab tab are ready)
+  After linking → dashboard: Sync Now · Auto-Push after cell run · Auto Sync · Push granularity
+  Then, while working in Colab, a toast in the corner says e.g.
+      "Pushed notebook to main after cell run"     (also the toolbar badge ✓ and its tooltip)
+
+Publisher setup (once — NOT something end users do)
+---------------------------------------------------
+A published build ships with the sign-in keys already in config.js, so users only ever see
+"Connect GitHub" → GitHub's Authorize page → "Connected as @username". If you loaded the raw
+source (config.js empty), the popup opens a guided "Publisher setup" screen instead of a dead
+button: callback URLs with Copy buttons, and boxes for the three values below. Do it once here,
+or bake them in with:  npm run configure -- --github-client-id … --token-exchange-url … --google-client-id …
+
+The popup also works immediately with a GitHub personal access token (scope: repo).
+
+1) GitHub OAuth App (2 minutes)
+  a) github.com → Settings → Developer settings → OAuth Apps → "New OAuth App"
+       Application name:            ColabHub
+       Homepage URL:                anything (e.g. https://github.com/<you>)
+       Authorization callback URL:  https://opghjahdadhgakfklikfgmibfpajbggj.chromiumapp.org/github
+  b) Register application → copy the "Client ID" (looks like Ov23li...).
+  c) Same page → "Generate a new client secret" → copy it (shown once). It goes into the Worker
+     below — never into the extension.
+
+2) Token-exchange backend (5 minutes, free)
+  Why: GitHub only hands out a token in exchange for the app's client secret, even with PKCE
+  (a secret-less attempt fails with "The client_id and/or client_secret passed are incorrect").
+  A secret can't live inside an extension, so a ~100-line Cloudflare Worker (backend/worker.js in
+  the project) holds it and does that single step. From the project folder:
+       cd backend
+       npx wrangler login                              (free Cloudflare account)
+       npx wrangler secret put GITHUB_CLIENT_ID        (paste the Client ID)
+       npx wrangler secret put GITHUB_CLIENT_SECRET    (paste the client secret)
+       npx wrangler deploy                             → prints https://colabhub-auth.<you>.workers.dev
+  Paste that URL into the setup screen's "Token-exchange backend" box (the Test button pings it)
+  or pass it as --token-exchange-url. wrangler.toml already allow-lists this extension's ID.
+
+  Personal build without a backend: open "Personal build without a backend (dev only)" on the
+  setup screen and paste the client secret instead. Never distribute such a build.
+  No-secret alternative: GITHUB_AUTH_METHOD 'device' (the user types a code on github.com).
+
+3) Google OAuth client (needed to READ the notebook from Drive)
+---------------------------------------------------------------
+  a) console.cloud.google.com → new project → APIs & Services
+  b) Enable "Google Drive API"
+  c) OAuth consent screen → External → scope .../auth/drive.readonly → add yourself as test user
+  d) Credentials → Create → OAuth client ID → Web application → Authorized redirect URI:
+        https://opghjahdadhgakfklikfgmibfpajbggj.chromiumapp.org/google
+  e) paste the Client ID into the setup screen (or --google-client-id / config.js → GOOGLE_CLIENT_ID)
+
+Push granularity (per notebook, dashboard → "Push granularity")
+---------------------------------------------------------------
+  Whole notebook (.ipynb)          exact copy of the notebook
+  Python script (.py)              code cells only, "# %%" cell markers (VS Code / jupytext format)
+  Cell outputs + log (.outputs.json)  what each cell printed/plotted + execution log, no source
+
+Full details: README.md in the project root.

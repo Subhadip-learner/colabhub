@@ -4,6 +4,12 @@
 
 A Chrome (Manifest V3) extension that keeps your Google Colab notebooks committed to GitHub — LeetHub for Colab.
 
+## User setup (Banglish)
+
+Normal user-ke Client ID, Client Secret, Cloudflare URL, ba developer setup dite hoy na. User sudhu GitHub Device Flow diye connect korbe, first sync-e Google Drive permission debe, repository select korbe, ebong Auto-Push on rekhe Colab-e cell run korbe. Full Banglish guide: [`docs/USER_GUIDE_BN.md`](docs/USER_GUIDE_BN.md).
+
+**Testing vs public release:** Google OAuth app `Testing` mode-e thakle prottek tester-er Gmail developer-ke dite hoy, jate `Google Auth Platform -> Audience -> Test users`-e add kora jay. App `In production` ebong Google verification complete hole public user-der Gmail collect kore Test users-e add korte hoy na.
+
 ```
 Connect GitHub (OAuth) → Create / pick a repository → Choose Private / Public → Work normally in Colab
                                                                           ↓

@@ -454,14 +454,14 @@ test('GitHub OAuth (dev build): Client ID alone cannot finish sign-in; a pasted 
   await ok({ type: 'setAppConfig', patch: { GITHUB_CLIENT_SECRET: '' } });
 });
 
-test('GitHub Device Flow (opt-in): start opens github.com with a user code, polling connects once approved', async () => {
+test('GitHub Device Flow: returns a user code and polling connects once approved', async () => {
   await ok({ type: 'setAppConfig', patch: { GITHUB_AUTH_METHOD: 'device' } });
   assert.equal((await ok({ type: 'getState', tabId: 1 })).capabilities.githubAuthMethod, 'device');
   const start = await ok({ type: 'connectGithubOAuth' });
   assert.equal(start.done, false);
   assert.equal(start.userCode, 'ABCD-1234');
   assert.equal(start.verificationUri, 'https://github.com/login/device');
-  assert.deepEqual(createdTabs, ['https://github.com/login/device'], 'verification page opened in a tab');
+  assert.deepEqual(createdTabs, [], 'popup keeps the code visible before the user opens GitHub');
 
   // too early → worker respects the interval without hitting GitHub
   const early = await ok({ type: 'deviceFlowPoll' });
@@ -490,7 +490,7 @@ test('GitHub Device Flow (opt-in): start opens github.com with a user code, poll
   assert.equal((await ok({ type: 'deviceFlowPoll' })).status, 'expired');
 
   await ok({ type: 'disconnectGithub' });
-  await ok({ type: 'setAppConfig', patch: { GITHUB_AUTH_METHOD: '' } }); // back to default (oauth)
+  await ok({ type: 'setAppConfig', patch: { GITHUB_AUTH_METHOD: '' } }); // clear the runtime override
 });
 
 test('runtime app config overrides the build config and flips capabilities', async () => {
@@ -744,8 +744,8 @@ test('Auto-Push after cell run: debounced, commits at the chosen granularity, st
   const repo = github.repos['subhadip/ML-Projects'];
   const sender = { tab: { id: 1, url: `https://colab.research.google.com/drive/${FILE_ID}` } };
 
-  // off by default → nothing scheduled
-  assert.deepEqual(await ok({ type: 'cellExecuted' }, sender), { scheduled: false });
+  // the production default enables Auto-Push for newly linked notebooks
+  assert.equal((await ok({ type: 'getState', tabId: 1 })).notebook.autoPushOnCell, true);
 
   // switch to .py granularity → path extension follows, next sync re-evaluates
   let nb = await ok({ type: 'updateNotebookConfig', fileId: FILE_ID, patch: { autoPushOnCell: true, granularity: 'py' } });

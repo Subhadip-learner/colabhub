@@ -117,7 +117,6 @@ async function render() {
 // Everything is visible at once; cards just change state (like the LeetHub-style popups).
 
 function renderOverview() {
-  if (!state.github && !state.capabilities.githubOAuth && !route.forceConnect) return renderSetup();
   const el = mount(tpl('tpl-overview'));
   const s = (name) => el.querySelector(`[data-slot="${name}"]`);
   const a = (name) => el.querySelector(`[data-action="${name}"]`);
@@ -146,10 +145,8 @@ function renderOverview() {
       go('auto', {}, { replace: true });
     });
   } else if (!state.capabilities.githubOAuth) {
-    s('gh-sub').innerHTML = 'One-click sign-in is not set up in this build — <a href="#" data-action="open-setup">finish the publisher setup</a>, or use a token below.';
-    s('gh-sub').querySelector('[data-action="open-setup"]').addEventListener('click', (e) => { e.preventDefault(); go('setup'); });
-    oauthBtn.classList.add('hidden');
-    s('pat-details').open = true;
+    s('gh-sub').textContent = 'Connect with GitHub using a one-time code';
+    s('gh-dot').className = 'dot warn';
   } else {
     s('gh-sub').textContent = isDevice
       ? 'Sign in on github.com with a one-time code'
@@ -307,6 +304,7 @@ async function renderSetup() {
   f('githubClientId').value = cfg.githubClientId || '';
   f('tokenExchangeUrl').value = cfg.tokenExchangeUrl || '';
   f('googleClientId').value = cfg.googleClientId || '';
+  if (state.capabilities.githubAuthMethod === 'device') el.querySelector('[data-step="backend"]')?.classList.add('hidden');
   if (cfg.githubClientSecretSet) {
     f('githubClientSecret').placeholder = 'Client secret saved ✓ (paste a new one to replace)';
     if (!cfg.tokenExchangeUrl) el.querySelector('details').open = true;

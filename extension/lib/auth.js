@@ -14,6 +14,7 @@ const GITHUB_AUTHORIZE = 'https://github.com/login/oauth/authorize';
 const GITHUB_ACCESS_TOKEN = 'https://github.com/login/oauth/access_token';
 const GOOGLE_AUTHORIZE = 'https://accounts.google.com/o/oauth2/v2/auth';
 const SESSION_KEY = 'googleTokenCache';
+let googleWebFlowInFlight = null;
 
 function randomState() {
   const b = new Uint8Array(16);
@@ -337,11 +338,14 @@ export async function googleToken({ interactive = false, loginHint } = {}) {
     if (!interactive) params.set('prompt', 'none');
 
     let redirected;
+    const flow = googleWebFlowInFlight ?? (googleWebFlowInFlight = launchWebAuthFlow(`${GOOGLE_AUTHORIZE}?${params}`, interactive));
     try {
-      redirected = new URL(await launchWebAuthFlow(`${GOOGLE_AUTHORIZE}?${params}`, interactive));
+      redirected = new URL(await flow);
     } catch (e) {
       if (!interactive) throw new NeedsInteractionError(`Google Drive sign-in required (${e.message})`);
       throw e;
+    } finally {
+      if (googleWebFlowInFlight === flow) googleWebFlowInFlight = null;
     }
     const frag = new URLSearchParams(redirected.hash.replace(/^#/, ''));
     const err = frag.get('error') || redirected.searchParams.get('error');

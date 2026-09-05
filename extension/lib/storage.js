@@ -16,7 +16,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   autoSyncDefault: true,
   autoSyncMinutes: 5,
   stripOutputsDefault: false,
-  autoPushOnCellDefault: false, // Auto-Push after every cell run (per-notebook toggle, this is the default for new links)
+  autoPushOnCellDefault: true, // Auto-Push after every cell run (per-notebook toggle, this is the default for new links)
   granularityDefault: 'ipynb', // 'ipynb' | 'py' | 'outputs'
 });
 
@@ -47,7 +47,12 @@ export async function setGithub(value) {
 
 export async function getNotebooks() {
   const { notebooks } = await read('notebooks');
-  return notebooks ?? {};
+  return Object.fromEntries(
+    Object.entries(notebooks ?? {}).map(([fileId, notebook]) => [
+      fileId,
+      'autoPushOnCell' in notebook ? notebook : { ...notebook, autoPushOnCell: true },
+    ]),
+  );
 }
 
 export async function getNotebook(fileId) {

@@ -24,6 +24,7 @@ import { isGranularity, pathForGranularity, describePush } from './lib/granulari
 const AUTOSYNC_ALARM = 'colabsync:autosync';
 const SAVE_ALARM_PREFIX = 'colabsync:save:';
 const CELL_ALARM_PREFIX = 'colabsync:cell:';
+const DEVICE_ALARM = 'colabsync:github-device';
 const CELL_DEBOUNCE_MS = 8000; // a cell run usually comes in bursts (Shift+Enter, Shift+Enter…)
 const CELL_MAX_WAITS = 3; // Colab autosaves a little after a run; re-check Drive up to 3 × 30 s
 const inflight = new Map(); // fileId -> Promise, prevents concurrent syncs of the same notebook
@@ -52,6 +53,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     const fileId = alarm.name.slice(CELL_ALARM_PREFIX.length);
     await pushAfterCell(fileId);
   }
+  if (alarm.name === DEVICE_ALARM) await deviceFlowPoll().catch(() => {});
 });
 
 // Badge follows the active tab.
@@ -93,6 +95,7 @@ async function handleMessage(msg, sender) {
       return deviceFlowPoll();
     case 'deviceFlowCancel':
       deviceSession = null;
+      await chrome.alarms.clear(DEVICE_ALARM).catch(() => {});
       return true;
     case 'connectGithubPat':
       return connectGithubWithToken(String(msg.token ?? '').trim(), 'pat');
@@ -270,8 +273,8 @@ let deviceSession = null; // { deviceCode, userCode, verificationUri, interval, 
 async function deviceFlowStart() {
   const s = await githubDeviceStart();
   deviceSession = { ...s, nextPollAt: Date.now() + s.interval * 1000 };
-  // Open GitHub's verification page in a new tab; the popup shows the code to type.
-  chrome.tabs.create({ url: s.verificationUri, active: true }).catch(() => {});
+  await chrome.alarms.create(DEVICE_ALARM, { delayInMinutes: 0.5, periodInMinutes: 0.5 });
+  // Keep the popup open so the user can copy the code before opening GitHub.
   return { done: false, userCode: s.userCode, verificationUri: s.verificationUri, expiresAt: s.expiresAt, interval: s.interval };
 }
 
@@ -280,6 +283,7 @@ async function deviceFlowPoll() {
   if (!deviceSession) return { status: 'expired' };
   if (Date.now() > deviceSession.expiresAt) {
     deviceSession = null;
+    await chrome.alarms.clear(DEVICE_ALARM).catch(() => {});
     return { status: 'expired' };
   }
   if (Date.now() < deviceSession.nextPollAt) return { status: 'pending', retryIn: deviceSession.nextPollAt - Date.now() };
@@ -293,6 +297,7 @@ async function deviceFlowPoll() {
   }
   if (r.status === 'ok') {
     deviceSession = null;
+    await chrome.alarms.clear(DEVICE_ALARM).catch(() => {});
     const connected = await connectGithubWithToken(r.token, 'oauth', r.scope);
     return { status: 'ok', ...connected };
   }
@@ -319,6 +324,7 @@ async function connectGithubWithToken(token, source, scope = '') {
 
 async function createRepoAndConnect({ fileId, title, owner, name, description, isPrivate, addReadme, gitignoreTemplate, path, autoSync, autoPushOnCell, granularity, stripOutputs }) {
   const { token, viewer } = await requireGithub();
+  ({ title, path } = await resolveNotebookIdentity(fileId, title, path));
   const nameError = validateRepoName(name);
   if (nameError) throw new Error(nameError);
 
@@ -364,6 +370,7 @@ async function createRepoAndConnect({ fileId, title, owner, name, description, i
 
 async function connectExistingRepo({ fileId, title, owner, repo: repoName, branch, path, autoSync, autoPushOnCell, granularity, stripOutputs }) {
   const { token } = await requireGithub();
+  ({ title, path } = await resolveNotebookIdentity(fileId, title, path));
   const settings = await store.getSettings();
   const repo = await gh.getRepo(token, owner, repoName);
   if (repo.permissions && !repo.permissions.push) throw new Error(`You don't have push access to ${repo.fullName}`);
@@ -379,6 +386,15 @@ async function connectExistingRepo({ fileId, title, owner, repo: repoName, branc
   });
   const sync = await syncNotebook(fileId, { trigger: 'initial' }).catch((e) => ({ action: 'error', error: e.message }));
   return { notebook: await store.getNotebook(fileId), sync };
+}
+
+async function resolveNotebookIdentity(fileId, fallbackTitle, requestedPath) {
+  const meta = await getFileMeta(fileId, { interactive: true });
+  const title = meta.name || fallbackTitle || 'notebook';
+  const settings = await store.getSettings();
+  const fallbackPath = defaultNotebookPath(settings.defaultFolder, fallbackTitle || 'notebook');
+  const path = requestedPath === fallbackPath ? defaultNotebookPath(settings.defaultFolder, title) : requestedPath;
+  return { title, path };
 }
 
 async function linkNotebook(fileId, { title, repo, branch, path, autoSync, autoPushOnCell, granularity, stripOutputs }) {

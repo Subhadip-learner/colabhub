@@ -1,0 +1,11 @@
+name = "colabhub-auth"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+[vars]
+# Comma-separated extension IDs allowed to call this worker. Leave empty while developing.
+ALLOWED_EXTENSION_IDS = "opghjahdadhgakfklikfgmibfpajbggj"
+
+# Secrets — never put these in this file:
+#   npx wrangler secret put GITHUB_CLIENT_ID
+#   npx wrangler secret put GITHUB_CLIENT_SECRET
